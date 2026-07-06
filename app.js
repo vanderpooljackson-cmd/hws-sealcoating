@@ -40,42 +40,15 @@
     onScroll();
   });
 
-  // Contact form — Web3Forms (public HTTPS endpoint, works in published sandbox)
+  // Contact form submits natively (POST to Web3Forms) — bypasses CORS, redirects to success.html.
+  // Honeypot guard: if the hidden botcheck field is filled, block submission.
   var form = document.getElementById('quoteForm');
   if (form) {
-    var status = document.getElementById('formStatus');
-    var btn = document.getElementById('submitBtn');
-    var defaultLabel = btn ? btn.textContent : 'Send My Free Quote';
-
     form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (status) { status.textContent = ''; status.className = 'form-status'; }
+      if (form.querySelector('[name="botcheck"]').checked) { e.preventDefault(); return false; }
+      var btn = document.getElementById('submitBtn');
       if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
-
-      var data = new FormData(form);
-      // honeypot
-      if (data.get('botcheck')) { return false; }
-
-      fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Accept': 'application/json' },
-        body: data
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (res) {
-          if (res.success) {
-            if (status) { status.textContent = 'Thanks — your request is in. We will reach out within 24 hours.'; status.classList.add('success'); }
-            form.reset();
-          } else {
-            throw new Error(res.message || 'Submission failed');
-          }
-        })
-        .catch(function (err) {
-          if (status) { status.textContent = 'Something went wrong. Please call us at (804) 774-0332.'; status.classList.add('error'); }
-        })
-        .finally(function () {
-          if (btn) { btn.disabled = false; btn.textContent = defaultLabel; }
-        });
+      // Let the browser submit natively — Web3Forms redirects to success.html.
     });
   }
 })();
